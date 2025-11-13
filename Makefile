@@ -7,7 +7,7 @@ CC			 	= gcc
 RM			 	= rm -rf
 
 INCLUDES 	 	= -I./include/
-LINK_FLAG    	= -lsodium
+LINK_FLAG    	= -lsodium -Wl,--strip-sections
 CFLAGS 		 	= -Wall -Wextra \
 				  --coverage   \
 				  -fPIC
