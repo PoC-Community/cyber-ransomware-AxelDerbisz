@@ -1,0 +1,3 @@
+To erase symbols we can use the strip command:
+
+strip <bin> -o <dest>
